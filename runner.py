@@ -6,4 +6,8 @@
 # 3) For each repo
 # 4) trigger the agent (e.g. issue scanner agent)
 
+def main():
+    print("Hello, world from the runner script!")
 
+if __name__ == "__main__":
+    main()
