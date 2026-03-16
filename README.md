@@ -14,6 +14,7 @@ A cron job on the host triggers the review process on a configurable schedule. T
 **Infrastructure**
 - Runs wihtin a Docker container deployed on a Proxmox LXC (Ubuntu server image)
 - Container is stateless — all persistent data lives in host-mounted volumes
+  - to be clear, the state and repos themselves will be set up in the Dockerfile as mounted volumes. Configs will be baked into the image. 
 - Cron job triggers the review process per project. Project history and configuation is stored per repo and updated each time the process runs. 
 - Should be built to be extensible with possible future enhancements such as "bug fixer", "test writer", etc. components that can easily be configured to run against the repositories. 
 
