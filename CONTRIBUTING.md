@@ -13,7 +13,11 @@ docker run --rm review-bot
 
 Log in to GHCR locally
 ```
+<!-- Powershell -->
 echo $env:GHCR_TOKEN | docker login ghcr.io -u kaitlyn-dodds --password-stdin
+
+<!-- Terminal -->
+echo $GHCR_TOKEN | docker login ghcr.io -u kaitlyn-dodds --password-stdin
 ```
 
 Log out of GHCR
