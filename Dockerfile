@@ -18,4 +18,4 @@ COPY lib/ lib/
 
 RUN mkdir -p /app/state /app/repos
 
-CMD ["python", "runner.py"]
+ENTRYPOINT ["python", "runner.py"]

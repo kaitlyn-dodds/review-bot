@@ -1,1 +1,17 @@
-# repo config for hunter
+version: 1
+name: Hunter
+description: >
+  Hunter is a 2D simulation and survival game built in Godot Engine 4.6. The Player manages a cat colony, balancing growth, survival, relationships, and territory against a living world that pushes back.
+github_repo: kaitlyn-dodds/Hunter
+repo_path: /app/repos/Hunter
+branch: main
+agents:
+  bug_scanner:
+    file_pattern: "**/*.gd"
+    issues_file_path: "docs/KNOWN_ISSUES.md"
+    notes_file_path: "docs/agents/REVIEW_AGENT_NOTES.md"
+    context_file_paths:
+      - "docs/OVERVIEW.md"
+      - "docs/ARCHITECTURE.md"
+      - "docs/systems/*"
+      - "docs/genetics/*"
