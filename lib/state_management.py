@@ -1,5 +1,6 @@
 import os
 import yaml
+from datetime import datetime, timezone
 
 
 # This script should expose a state_management API that will be called by the runner
@@ -13,12 +14,6 @@ STATE_DIR = "/app/state"
 
 # Phase 2:
 # Note: these will all need to identify the repo they are targeting as well as the specific agent
-# get state for agent (specific to repo, get the nested state obj for a specific agent)
-    # create empty nested agent state if one does not exist
-# Get last_run.commit for a specific agent — for the skip/stale comparison
-    # create empty agent state if none exists, return None if no last_run defined
-# Get last_opened_pr for a specific agent — to check PR status with GitHub
-    # create empty agent state if none exists, return None if no last_opened_pr defined
 # Update last_run for a specific agent after any run attempt (success, skip, or failure)
 # Update last_opened_pr.status for a specific agent when staleness or merge/close is detected
 # Set last_opened_pr for a specific agent after a new PR is opened
@@ -91,3 +86,32 @@ def get_state_with_create(config):
 
     return get_state(config["name"])
 
+
+def get_last_run_for_agent(config, agent_name):
+    """
+    Gets an agents last_run state for the provided repo and agent name
+    """
+    state = get_state(config["name"])
+    return state["agents"][agent_name]["last_run"]
+
+
+def update_last_run_for_agent(config, agent_name, commit, status, error=None):
+    """
+    Update the last_run for a given agent with the provided commit, status, and
+    optional error message. Date should be set to now.
+    """
+    repo_name = config["name"]
+    state = get_state(repo_name)
+
+    state["agents"][agent_name]["last_run"] = {
+        "commit": commit,
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "status": status,
+        "error": error,
+    }
+
+    path = f"{STATE_DIR}/{repo_name}.yaml"
+    with open(path, "w") as f:
+        yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
+
+    return get_last_run_for_agent(config, agent_name)
