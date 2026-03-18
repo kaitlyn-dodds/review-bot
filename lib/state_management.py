@@ -1,5 +1,4 @@
 import os
-
 import yaml
 
 
@@ -11,8 +10,6 @@ STATE_DIR = "/app/state"
 
 
 # Phase 1: Basic API Functionality:
-# create new state file for provided repo config (returns newly created state as resource)
-# get state for repo at file path (throw error if no state file exists, return state as resource)
 
 # Phase 2:
 # Note: these will all need to identify the repo they are targeting as well as the specific agent
@@ -65,4 +62,32 @@ def create_state(repo_config):
         yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
 
     return state
+
+
+def get_state(repo_name):
+    """
+    Returns the state for the given repo as a dict.
+    Raises FileNotFoundError if no state file exists.
+    """
+    path = f"{STATE_DIR}/{repo_name}.yaml"
+
+    if not state_exists(repo_name):
+        raise FileNotFoundError(f"No state file found for repo '{repo_name}': {path}")
+
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
+def get_state_with_create(config):
+    """
+    Gets state for the given config if it exists,
+    creates a new state file otherwise. 
+    """
+
+    if not state_exists(config["name"]):
+        print(f"No state file exists for repo {config['name']}, creating...")
+        return create_state(config)
+    
+
+    return get_state(config["name"])
 
