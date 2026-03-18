@@ -1,0 +1,22 @@
+version: 1
+repo: MyProject               # should coorespond to repo name
+agents:
+  issue_scanner:              # for each agent defined on repo config
+    last_run:                 # will be absent on first run
+      commit: "abc123"
+      date: "2026-03-15T02:00:00Z"
+      status: "SUCCESS"        # SUCCESS | SKIPPED_NO_CHANGES | SKIPPED_PR_OPEN | FAILED_WITH_ERROR
+      error: null
+    last_opened_pr:            # optional - absent on first run
+      number: 42
+      branch: "bot/issue-scan-abc123"
+      opened_date: "2026-03-15T02:01:00Z"
+      base_commit: "abc123"
+      status: "OPEN"           # OPEN | STALE | MERGED | CLOSED_WITHOUT_MERGE
+    last_closed_pr:            # optional - absent until a PR has been resolved
+      number: 38
+      branch: "bot/issue-scan-b1d2e34"
+      opened_date: "2026-02-28T02:01:00Z"
+      closed_date: "2026-03-01T09:15:00Z"
+      outcome: "MERGED"        # MERGED | CLOSED_WITHOUT_MERGE
+      

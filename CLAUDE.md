@@ -48,3 +48,9 @@ review-bot/
 ## MVP Scope
 
 In scope: issue scanner agent only. Out of scope: auto-fixing, diff-scoped scans, notifications beyond GitHub PRs, any other agents.
+
+## Working Guidelines
+
+- **Ask before assuming**: If a requirement is ambiguous or an implementation decision has multiple valid options, ask for clarification before proceeding. Do not silently pick one path.
+- **Implement only what is asked**: Do not implement adjacent functions, refactor surrounding code, or add features beyond the explicit request.
+- **Scope confirmations**: If asked to implement one function, implement only that function — not the full phase or related helpers.

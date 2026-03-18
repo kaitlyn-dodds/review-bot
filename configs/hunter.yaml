@@ -6,7 +6,7 @@ github_repo: kaitlyn-dodds/Hunter
 repo_path: /app/repos/Hunter
 branch: main
 agents:
-  bug_scanner:
+  issue_scanner:
     file_pattern: "**/*.gd"
     issues_file_path: "docs/KNOWN_ISSUES.md"
     notes_file_path: "docs/agents/REVIEW_AGENT_NOTES.md"

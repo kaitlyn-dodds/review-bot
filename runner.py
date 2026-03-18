@@ -3,6 +3,8 @@ import os
 import sys
 import yaml
 
+from lib.state_management import state_exists, create_state
+
 
 CONFIG_DIR = "configs"
 
@@ -73,6 +75,19 @@ def main():
 
     config = load_config(config_path)
     agents = resolve_agents(config, args.agents)
+
+    # Repo Setup Step
+    # 1) Need to check for existing state file for repo
+    if not state_exists(config["name"]):
+        print(f"No state file exists for repo {config['name']}, creating...")
+        state = create_state(config)
+        print("STATE:")
+        print(state)
+    print("State already exists...")
+
+    # 2) Need to verify that repo exists at location in config (repo_path)
+        # If not, repo needs to be cloned from github
+    
 
     for agent_name, agent_config in agents:
         dispatch_agent(agent_name, agent_config, config)

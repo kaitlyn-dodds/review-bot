@@ -46,6 +46,31 @@ A cron job on the host triggers the review process on a configurable schedule. T
 - Nothing repo-specific or secret is baked into the Docker image
 - `state/` is gitignored
 
+**Repo Config Format**
+
+Per-repo config files live in `configs/` and are baked into the Docker image. The filename (without extension) is used to reference the repo from the CLI. Each file defines the repo location, GitHub details, and which agents to run with their settings.
+
+```yaml
+version: 1
+name: RepoName
+description: >
+  Short description of the project being analyzed.
+github_repo: owner/repo-name
+repo_path: /app/repos/RepoName
+branch: main
+agents:
+  bug_scanner:
+    file_pattern: "**/*.gd"
+    issues_file_path: "docs/KNOWN_ISSUES.md"
+    notes_file_path: "docs/agents/REVIEW_AGENT_NOTES.md"
+    context_file_paths:
+      - "docs/OVERVIEW.md"
+      - "docs/ARCHITECTURE.md"
+      - "docs/systems/*"
+```
+
+`context_file_paths` accepts glob patterns and is used to load any project documentation that helps the agent understand the repo's goals and structure. `file_pattern` scopes which source files the agent reads.
+
 ## Explicitly out of scope for MVP
 
 - Automatically fixing issues
