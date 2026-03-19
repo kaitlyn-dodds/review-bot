@@ -8,6 +8,9 @@ branch: main
 agents:
   issue_scanner:
     file_pattern: "**/*.gd"
+    ignore_paths:
+      - "addons/**"
+      - "tests/**"
     issues_file_path: "docs/KNOWN_ISSUES.md"
     notes_file_path: "docs/agents/REVIEW_AGENT_NOTES.md"
     context_file_paths:

@@ -87,6 +87,13 @@ def get_state_with_create(config):
     return get_state(config["name"])
 
 
+def get_state_for_agent(config, agent_name):
+    """
+    Gets agents state for the provided repo and agent name
+    """
+    state = get_state(config["name"])
+    return state["agents"][agent_name]
+
 def get_last_run_for_agent(config, agent_name):
     """
     Gets an agents last_run state for the provided repo and agent name
@@ -115,3 +122,17 @@ def update_last_run_for_agent(config, agent_name, commit, status, error=None):
         yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
 
     return get_last_run_for_agent(config, agent_name)
+
+
+def update_last_opened_pr_for_agent(config, agent_name, pr_data):
+    """
+    Updates the repo state for the given agent with the provided
+    pr data. 
+    """
+    pass
+
+
+def update_last_closed_pr_for_agent(config, agent_name, pr_data):
+    """
+    """
+    pass

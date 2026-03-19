@@ -1,6 +1,6 @@
 import os
 
-from lib.github_client import clone, checkout_to_branch
+from lib.git_runner import clone, checkout_to_branch
 
 REPO_DIR = "/app/repos"
 

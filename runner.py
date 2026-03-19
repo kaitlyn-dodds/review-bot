@@ -1,13 +1,22 @@
 import argparse
 import sys
 
+# Libraries
 from lib.config_management import find_config_path, load_config, resolve_agents_on_config
-from lib.state_management import get_state_with_create, update_last_run_for_agent
+from lib.state_management import get_state_with_create, update_last_run_for_agent, get_state_for_agent, update_last_opened_pr_for_agent
 from lib.repo_management import repo_exists, clone_repo, checkout_branch
-from lib.github_client import get_commit_hash
+from lib.git_runner import get_commit_hash
+from lib.errors import UnknownAgentError
+
+# Agents
+from agents.issue_scanner import IssueScannerAgent
 
 
 CONFIG_DIR = "configs"
+
+AGENT_REGISTRY = {
+    "issue_scanner": IssueScannerAgent,
+}
 
 
 def parse_args():
@@ -15,6 +24,17 @@ def parse_args():
     parser.add_argument("--repo", required=True, help="Repository name (must match a config filename)")
     parser.add_argument("agents", nargs="*", metavar="AGENT", help="Agent names to run (runs all configured agents if omitted)")
     return parser.parse_args()
+
+
+def run_agent(agent_name, repo_config, agent_config, agent_state):
+    """Instantiates and runs the appropriate agent class."""
+    agent_class = AGENT_REGISTRY.get(agent_name)
+    if agent_class is None:
+        print(f"Unknown agent '{agent_name}', skipping.")
+        raise UnknownAgentError(agent_name)
+
+    agent = agent_class(repo_config, agent_config, agent_state)
+    return agent.run()  # agent owns: reading files, calling Claude, creating branch, opening PR
 
 
 def verify_and_update_last_opened_pr(repo_config, agent_state):
@@ -29,43 +49,51 @@ def verify_and_update_last_opened_pr(repo_config, agent_state):
 
 
 def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
-    # Agent tasks (what every agent must perform)
-    # Set repo to config["branch"]
     checkout_branch(repo_config["name"], repo_config["branch"], False)
-
-    # Get current git hash
     current_commit = get_commit_hash(repo_config["name"])
 
-    # Skip Agent Logic
+    # Need to do this step regardless of if additional changes have been made
+    verify_and_update_last_opened_pr(repo_config, agent_state)
 
-    # No new changes since last run
-    if agent_state["last_run"] and agent_state["last_run"]["commit"] == current_commit:
-        print("No new changes!")
-        # agent should NOT be run, but the script should check status of last_opened_pr
-        verify_and_update_last_opened_pr(repo_config, agent_state)
-        
-        # script should then update agent_state[last_run] - SKIPPED_NO_CHANGES
+    # get refreshed state
+    agent_state = get_state_for_agent(repo_config, agent_name)
+
+    # TODO: commit will change if last pr merged, need to workout this endless loop... 
+    # Skip if nothing new
+    last_commit = agent_state.get("last_run") or {}.get("commit")
+    if last_commit == current_commit:
+        print(f"[{agent_name}] No new commits since last run, skipping.")
         update_last_run_for_agent(repo_config, agent_name, current_commit, "SKIPPED_NO_CHANGES")
-    else: # changes have been made since last run
-        # TODO: need to address issue w/ endless loop over merged bot prs
-        
-        # TODO: call agent here
-        # should agent be responsible for committing and pushing the changes??
+        return
 
-        # assume agent completed successfully
-        # TODO: commit and push all changes 
+    # Skip if a bot PR is still open — don't pile on
+    if agent_state.get("last_opened_pr") or {}.get("status") == "open":
+        print(f"[{agent_name}] PR still open, skipping.")
+        update_last_run_for_agent(repo_config, agent_name, current_commit, "SKIPPED_PR_OPEN")
+        return
 
-        # TODO: open pr w/ changes 
+    # Run the agent
+    try:
+        print(f"[{agent_name}] Running against commit {current_commit[:7]}...")
+        result = run_agent(agent_name, repo_config, agent_config, agent_state)
+    except UnknownAgentError as error:
+        update_last_run_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit, 
+            "FAILED_WITH_ERROR", 
+            str(error)
+        )
+        return
 
-        # TODO: update last_run
+    # if result suceeded and pr was opened
+    if result and result.get("pr_url"):
         update_last_run_for_agent(repo_config, agent_name, current_commit, "SUCCESS")
-
-        # TODO: update last_opened_pr
-        pass
-
-
-    # TODO: instantiate and run the appropriate agent class
-    print(f"Dispatching agent '{agent_name}' for repo '{repo_config['name']}'")
+        update_last_opened_pr_for_agent(repo_config, agent_name, result)
+        return 
+    
+    # no new pr 
+    update_last_run_for_agent(repo_config, agent_name, current_commit, "NO_FINDINGS")
 
 
 def main():

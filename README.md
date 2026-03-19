@@ -95,10 +95,12 @@ review-bot/
   prompts/
     issue_scanner.md
   lib/
-    github.py
-    git.py
-    claude.py
+    config_management.py
+    github_client.py
+    git_runner.py
+    repo_management.py
+    state_management.py
   configs/
     {repo-name}.yaml     # cannot run against a repo that isn't defined here
-  state/
+  state/ # not stored on the project, stored on host
     {repo-name}.json     # auto-created on first run, mirrors config filename
