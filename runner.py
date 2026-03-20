@@ -1,12 +1,13 @@
 import argparse
 import sys
+import anthropic
 
 # Libraries
 from lib.config_management import find_config_path, load_config, resolve_agents_on_config
 from lib.state_management import get_state_with_create, update_last_run_for_agent, get_state_for_agent, update_last_opened_pr_for_agent
 from lib.repo_management import repo_exists, clone_repo, checkout_branch
 from lib.git_runner import get_commit_hash
-from lib.errors import UnknownAgentError
+from lib.errors import UnknownAgentError, GitCommitError
 
 # Agents
 from agents.issue_scanner import IssueScannerAgent
@@ -81,8 +82,35 @@ def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
             repo_config, 
             agent_name, 
             current_commit, 
-            "FAILED_WITH_ERROR", 
+            "FAILED_WITH_UNKNOWN_AGENT_ERROR", 
             str(error)
+        )
+        return
+    except GitCommitError as error:
+        update_last_run_for_agent(
+            repo_config,
+            agent_name,
+            current_commit,
+            "FAILED_WITH_GIT_COMMIT_ERROR",
+            str(error)
+        )
+        return
+    except anthropic.BadRequestError as error:
+        update_last_run_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit, 
+            "FAILED_WITH_REQUEST_ERROR", 
+            str(error)
+        )
+        return
+    except:
+        update_last_run_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit, 
+            "FAILED_WITH_ERROR", 
+            "Unknown error"
         )
         return
 

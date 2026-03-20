@@ -1,4 +1,7 @@
+import os
 import subprocess
+
+from lib.errors import GitCommitError
 
 REPO_DIR = "/app/repos"
 
@@ -43,3 +46,28 @@ def get_commit_hash(repo_name):
     repo_dir = f"{REPO_DIR}/{repo_name}"
     result = subprocess.run(["git", "-C", repo_dir, "rev-parse", "HEAD"], check=True, capture_output=True, text=True)
     return result.stdout.strip()
+
+def commit_file(repo_name, file_path, commit_msg):
+    """
+    Runs git command to commit the given file at the given file path.
+    file_path may be absolute (including the repo dir) or relative to the repo.
+    Raises GitCommitError if the file doesn't exist or the commit fails.
+    """
+    path_to_repo = f"{REPO_DIR}/{repo_name}"
+
+    if repo_name not in file_path:
+        file_path = f"{repo_name}/{file_path}"
+
+    if not file_path.startswith(REPO_DIR):
+        file_path = f"{REPO_DIR}/{file_path}"
+
+    print("final path: ", file_path)
+
+    if not os.path.isfile(file_path):
+        raise GitCommitError(file_path, "file does not exist")
+
+    try:
+        subprocess.run(["git", "-C", path_to_repo, "add", file_path], check=True)
+        subprocess.run(["git", "-C", path_to_repo, "commit", "-m", commit_msg], check=True)
+    except subprocess.CalledProcessError as e:
+        raise GitCommitError(file_path, str(e))
