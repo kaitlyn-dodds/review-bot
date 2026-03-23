@@ -7,7 +7,7 @@ from lib.config_management import find_config_path, load_config, resolve_agents_
 from lib.state_management import get_state_with_create, update_last_run_for_agent, get_state_for_agent, update_last_opened_pr_for_agent
 from lib.repo_management import repo_exists, clone_repo, checkout_branch
 from lib.git_runner import get_commit_hash
-from lib.errors import UnknownAgentError, GitCommitError
+from lib.errors import UnknownAgentError, GitCommitError, GithubRepoError, GitCheckoutBranchError
 
 # Agents
 from agents.issue_scanner import IssueScannerAgent
@@ -53,6 +53,7 @@ def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
     checkout_branch(repo_config["name"], repo_config["branch"], False)
     current_commit = get_commit_hash(repo_config["name"])
 
+    # TODO: implement this
     # Need to do this step regardless of if additional changes have been made
     verify_and_update_last_opened_pr(repo_config, agent_state)
 
@@ -104,13 +105,31 @@ def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
             str(error)
         )
         return
-    except:
+    except GithubRepoError as error:
+        update_last_run_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit, 
+            "FAILED_TO_CREATE_PR_ERROR", 
+            str(error)
+        )
+        return
+    except GitCheckoutBranchError as error:
+        update_last_run_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit, 
+            "FAILED_GIT_BRANCH_ERROR", 
+            str(error)
+        )
+        return
+    except Exception as error:
         update_last_run_for_agent(
             repo_config, 
             agent_name, 
             current_commit, 
             "FAILED_WITH_ERROR", 
-            "Unknown error"
+            repr(error)
         )
         return
 

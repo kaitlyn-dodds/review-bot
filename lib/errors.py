@@ -16,3 +16,23 @@ class GitCommitError(Exception):
             message += f": {reason}"
         super().__init__(message)
 
+class GitCheckoutBranchError(Exception):
+    """Raised when a git branch checkout or creation fails"""
+    def __init__(self, branch_name, reason=None):
+        self.branch_name = branch_name
+        message = f"Failed to checkout branch '{branch_name}'"
+        if reason:
+            message += f": {reason}"
+        super().__init__(message)
+
+
+class GithubRepoError(Exception):
+    """Raised when error thrown interacting w/ github repo"""
+    def __init__(self, repo_name, reason=None):
+        self.repo_name = repo_name
+        message = f"Unable to interact with repo '{repo_name}'"
+        if reason:
+            message += f": {reason}"
+        super().__init__(message)
+
+

@@ -16,6 +16,11 @@ COPY agents/ agents/
 COPY prompts/ prompts/
 COPY lib/ lib/
 
+ENV GIT_AUTHOR_NAME="Review Bot"                                                                                                                                
+ENV GIT_AUTHOR_EMAIL="review-bot@noreply"
+ENV GIT_COMMITTER_NAME="Review Bot"                                                                                                                             
+ENV GIT_COMMITTER_EMAIL="review-bot@noreply"
+
 RUN mkdir -p /app/state /app/repos
 
 ENTRYPOINT ["python", "runner.py"]

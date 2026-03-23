@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
-from lib.git_runner import create_branch, commit_file
+from lib.git_runner import create_branch, commit_file, get_commit_hash
 from lib.github_client import open_pr
 
 
@@ -32,25 +32,25 @@ class IssueScannerAgent(BaseAgent):
             return None
 
         # # 6. Write updated KNOWN_ISSUES.md
-        print("Adding findings: ", findings)
+        print("Findings: ", findings)
         updated_content = self._build_known_issues(findings, context)
         issues_path = self.repo_path / self.agent_config["issues_file_path"]
         issues_path.write_text(updated_content, encoding="utf-8")
 
         # # 7. Create branch, commit, open PR
-        commit_hash = self.agent_state["last_run"]["commit"]  # set by runner before dispatch
+        commit_hash = get_commit_hash(self.repo_config["name"])
         branch_name = f"bot/issue-scan-{commit_hash[:7]}"
 
         create_branch(self.repo_config["name"], branch_name)
         commit_file(self.repo_config["name"], str(issues_path), "bot: update KNOWN_ISSUES.md")
-        # pr_url, pr_number = open_pr(
-        #     self.repo_config,
-        #     branch_name,
-        #     title=f"[Bot] Issue scan — {commit_hash[:7]}",
-        #     body=self._build_pr_body(findings),
-        # )
+        pr_url, pr_number = open_pr(
+            self.repo_config,
+            branch_name,
+            title=f"[Bot] Issue scan — {commit_hash[:7]}",
+            body=self._build_pr_body(findings),
+        )
 
-        # return {"pr_url": pr_url, "pr_number": pr_number, "findings": findings}
+        return {"pr_url": pr_url, "pr_number": pr_number, "findings": findings}
 
     def _build_user_message(self, sources, context):
         parts = []
