@@ -15,6 +15,7 @@ def get_client():
         _client = Github(auth=auth)
     return _client
 
+
 def get_repo(repo_name):
     """
     Get a repo with the provided repo name
@@ -28,6 +29,7 @@ def get_repo(repo_name):
         raise GithubRepoError(repo_name, reason=str(e))
     
     return repo
+
 
 def open_pr(repo_config, branch_name, title, body):
     """
@@ -51,7 +53,8 @@ def open_pr(repo_config, branch_name, title, body):
         raise GithubRepoError(repo_config["github_repo"], reason=str(e))
     
     return ( pr.html_url, pr.number )
-    
+
+
 def get_pull_request(repo_config, pr_number):
     # get repo
     repo = get_repo(repo_config["github_repo"])

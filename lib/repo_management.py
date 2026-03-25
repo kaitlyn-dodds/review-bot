@@ -12,6 +12,7 @@ def repo_exists(repo_name):
     path = f"{REPO_DIR}/{repo_name}"
     return os.path.isdir(path)
 
+
 # Create (clone from git) repo given repo config
 def clone_repo(config):
     """
@@ -29,6 +30,7 @@ def clone_repo(config):
         print(f"Unable to clone repo {config["github_repo"]}")
         # TODO: use dedicated exception type
         raise Exception(f"Unable to clone repo {config["github_repo"]}")
+
 
 def checkout_branch(repo_name, branch, create_branch=False):
     """
