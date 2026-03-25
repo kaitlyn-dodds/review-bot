@@ -50,6 +50,14 @@ def get_commit_hash(repo_name):
     result = subprocess.run(["git", "-C", repo_dir, "rev-parse", "HEAD"], check=True, capture_output=True, text=True)
     return result.stdout.strip()
 
+def get_current_branch(repo_name):
+    """
+    Returns the current git branch 
+    """
+    repo_dir = f"{REPO_DIR}/{repo_name}"
+    result = subprocess.run(["git", "-C", repo_dir, "rev-parse", "--abbrev-ref", "HEAD"], check=True, capture_output=True, text=True)
+    return result.stdout.strip()
+
 def commit_file(repo_name, file_path, commit_msg):
     """
     Runs git command to commit the given file at the given file path.
@@ -68,6 +76,10 @@ def commit_file(repo_name, file_path, commit_msg):
         )
         subprocess.run(
             ["git", "-C", path_to_repo, "commit", "-m", commit_msg],
+            check=True, capture_output=True, text=True
+        )
+        subprocess.run(
+            ["git", "-C", path_to_repo, "push", "--set-upstream", "origin", "HEAD"],
             check=True, capture_output=True, text=True
         )
     except subprocess.CalledProcessError as e:

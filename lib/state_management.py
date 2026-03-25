@@ -101,6 +101,20 @@ def get_last_run_for_agent(config, agent_name):
     state = get_state(config["name"])
     return state["agents"][agent_name]["last_run"]
 
+def get_last_opened_pr_for_agent(config, agent_name):
+    """
+    Gets an agents last_opened_pr state for the provided repo and agent name
+    """
+    state = get_state(config["name"])
+    return state["agents"][agent_name]["last_opened_pr"]
+
+def get_last_closed_pr_for_agent(config, agent_name):
+    """
+    Gets an agents last_closed_pr state for the provided repo and agent name
+    """
+    state = get_state(config["name"])
+    return state["agents"][agent_name]["last_closed_pr"]
+
 
 def update_last_run_for_agent(config, agent_name, commit, status, error=None):
     """
@@ -124,15 +138,59 @@ def update_last_run_for_agent(config, agent_name, commit, status, error=None):
     return get_last_run_for_agent(config, agent_name)
 
 
-def update_last_opened_pr_for_agent(config, agent_name, pr_data):
+def update_last_opened_pr_for_agent(config, agent_name, commit, branch, pr_number, status="OPEN"):
     """
     Updates the repo state for the given agent with the provided
     pr data. 
     """
-    pass
+    repo_name = config["name"]
+    state = get_state(repo_name)
+
+    state["agents"][agent_name]["last_opened_pr"] = {
+        "number": pr_number,
+        "branch": branch, 
+        "opened_date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "base_commit": commit,
+        "status": status
+    }
+
+    path = f"{STATE_DIR}/{repo_name}.yaml"
+    with open(path, "w") as f:
+        yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
+
+    return get_last_opened_pr_for_agent(config, agent_name)
 
 
-def update_last_closed_pr_for_agent(config, agent_name, pr_data):
+def update_last_closed_pr_for_agent(config, agent_name, pr_data, outcome="MERGED"):
     """
+    Updates the repo state for the given agent with the provided
+    pr data. 
     """
-    pass
+    repo_name = config["name"]
+    state = get_state(repo_name)
+
+    state["agents"][agent_name]["last_closed_pr"] = {
+        "number": pr_data["pr_number"],
+        "branch": pr_data["branch"],
+        "opened_date": pr_data["opened_date"],
+        "closed_date": pr_data["closed_date"],
+        "outcome": outcome
+    }
+
+    path = f"{STATE_DIR}/{repo_name}.yaml"
+    with open(path, "w") as f:
+        yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
+
+    return get_last_closed_pr_for_agent(config, agent_name)
+
+def update_last_opened_pr_status(config, agent_name, status):
+    repo_name = config["name"]
+    state = get_state(repo_name)
+
+    state["agents"][agent_name]["last_opened_pr"]["status"] = status
+
+    path = f"{STATE_DIR}/{repo_name}.yaml"
+    with open(path, "w") as f:
+        yaml.dump(state, f, default_flow_style=False, allow_unicode=True)
+
+    return get_last_opened_pr_for_agent(config, agent_name)

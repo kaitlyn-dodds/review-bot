@@ -72,9 +72,9 @@ class BaseAgent:
 
         return context
 
-    def call_claude(self, system_prompt, user_message):
-        """Calls Claude API, returns raw response text."""
-        return call_claude(system_prompt, user_message)
+    def call_claude(self, system_prompt, user_message, tools=None, tool_choice=None):
+        """Calls Claude API. Returns tool input dict if tools provided, otherwise raw response text."""
+        return call_claude(system_prompt, user_message, tools=tools, tool_choice=tool_choice)
 
     def run(self):
         raise NotImplementedError(f"{self.__class__.__name__} must implement run()")

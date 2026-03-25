@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
@@ -7,6 +6,31 @@ from lib.github_client import open_pr
 
 
 PROMPTS_DIR = Path("prompts")
+
+FINDINGS_TOOL = {
+    "name": "report_findings",
+    "description": "Report all bugs and logic issues found in the codebase.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "findings": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "title":         {"type": "string"},
+                        "severity":      {"type": "string", "enum": ["low", "medium", "high"]},
+                        "file":          {"type": "string"},
+                        "description":   {"type": "string"},
+                        "suggested_fix": {"type": "string"},
+                    },
+                    "required": ["title", "severity", "file", "description", "suggested_fix"]
+                }
+            }
+        },
+        "required": ["findings"]
+    }
+}
 
 
 class IssueScannerAgent(BaseAgent):
@@ -23,16 +47,20 @@ class IssueScannerAgent(BaseAgent):
         user_message = self._build_user_message(sources, context)
 
         # # 4. Call Claude
-        raw_response = self.call_claude(system_prompt, user_message)
+        response = self.call_claude(
+            system_prompt,
+            user_message,
+            tools=[FINDINGS_TOOL],
+            tool_choice={"type": "tool", "name": "report_findings"},
+        )
 
-        # # 5. Parse findings
-        findings = self._parse_findings(raw_response)
+        # # 5. Extract findings
+        findings = response.get("findings", [])
         if not findings:
             print("No new findings.")
             return None
 
         # # 6. Write updated KNOWN_ISSUES.md
-        print("Findings: ", findings)
         updated_content = self._build_known_issues(findings, context)
         issues_path = self.repo_path / self.agent_config["issues_file_path"]
         issues_path.write_text(updated_content, encoding="utf-8")
@@ -50,7 +78,7 @@ class IssueScannerAgent(BaseAgent):
             body=self._build_pr_body(findings),
         )
 
-        return {"pr_url": pr_url, "pr_number": pr_number, "findings": findings}
+        return {"pr_url": pr_url, "pr_number": pr_number, "branch": branch_name, "findings": findings}
 
     def _build_user_message(self, sources, context):
         parts = []
@@ -69,16 +97,6 @@ class IssueScannerAgent(BaseAgent):
             parts.append(f"### {path}\n```\n{content}\n```")
 
         return "\n\n".join(parts)
-
-    def _parse_findings(self, raw_response):
-        """Extracts JSON findings block from Claude's response."""
-        try:
-            start = raw_response.index("```json") + 7
-            end = raw_response.index("```", start)
-            return json.loads(raw_response[start:end].strip())
-        except (ValueError, json.JSONDecodeError) as e:
-            print(f"Failed to parse findings: {e}")
-            return []
 
     def _build_known_issues(self, findings, context):
         """Appends new findings to existing KNOWN_ISSUES.md content."""

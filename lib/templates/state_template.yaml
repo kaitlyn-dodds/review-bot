@@ -5,7 +5,7 @@ agents:
     last_run:                 # will be absent on first run
       commit: "abc123"
       date: "2026-03-15T02:00:00Z"
-      status: "SUCCESS"        # SUCCESS | SKIPPED_NO_CHANGES | SKIPPED_PR_OPEN | FAILED_WITH_ERROR
+      status: "SUCCESS"        # SUCCESS_PR_OPENED | SKIPPED_NO_CHANGES | SKIPPED_PR_OPEN | FAILED_WITH_ERROR
       error: null
     last_opened_pr:            # optional - absent on first run
       number: 42

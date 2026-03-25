@@ -52,4 +52,13 @@ def open_pr(repo_config, branch_name, title, body):
     
     return ( pr.html_url, pr.number )
     
+def get_pull_request(repo_config, pr_number):
+    # get repo
+    repo = get_repo(repo_config["github_repo"])
 
+    try:
+        pr = repo.get_pull(pr_number)
+    except Exception as e:
+        raise GithubRepoError(repo_config["github_repo"], reason=str(e))
+
+    return pr

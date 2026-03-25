@@ -1,12 +1,14 @@
 import argparse
 import sys
 import anthropic
+from datetime import datetime, timezone
 
 # Libraries
 from lib.config_management import find_config_path, load_config, resolve_agents_on_config
-from lib.state_management import get_state_with_create, update_last_run_for_agent, get_state_for_agent, update_last_opened_pr_for_agent
+from lib.state_management import get_state_with_create, update_last_run_for_agent, get_state_for_agent, update_last_opened_pr_for_agent, get_last_opened_pr_for_agent, update_last_opened_pr_status, update_last_closed_pr_for_agent
 from lib.repo_management import repo_exists, clone_repo, checkout_branch
 from lib.git_runner import get_commit_hash
+from lib.github_client import get_pull_request
 from lib.errors import UnknownAgentError, GitCommitError, GithubRepoError, GitCheckoutBranchError
 
 # Agents
@@ -38,38 +40,64 @@ def run_agent(agent_name, repo_config, agent_config, agent_state):
     return agent.run()  # agent owns: reading files, calling Claude, creating branch, opening PR
 
 
-def verify_and_update_last_opened_pr(repo_config, agent_state):
-    # if no last opened, do nothing
+def verify_and_update_last_opened_pr(repo_config, agent_name):
+    last_opened_state = get_last_opened_pr_for_agent(repo_config, agent_name)
+    if not last_opened_state:
+        return # nothing to do if no last opened pr
+
     # check status of last opened pr in github (merged?)
-    # if no changes (e.g. still open)
-        # TODO: figure out staleness logic, for now just return
-    # if closed, figure out reason (e.g. merged, closed w/out merge?)
-    # update state on last_opened_pr
-    # update state on last_closed_pr to reflect this pr 
-    pass
+    last_pr = get_pull_request(repo_config, last_opened_state["number"])
+    if last_pr.state.lower() == "open":
+        last_opened_state = update_last_opened_pr_status(repo_config, agent_name, "STALE") # mark last opened pr stale
+
+    elif last_pr.state.lower() == "closed" and not last_pr.merged:
+        last_opened_state = update_last_opened_pr_status(repo_config, agent_name, "CLOSED_WITHOUT_MERGE") # mark last opened pr closed w/out merge
+        update_last_closed_pr_for_agent(
+            repo_config, 
+            agent_name, {
+                "pr_number": last_opened_state["number"],
+                "branch": last_opened_state["branch"],
+                "opened_date": last_opened_state["opened_date"],
+                "closed_date": last_pr.closed_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+            },
+            "CLOSED_WITHOUT_MERGE"
+        )
+
+    elif last_pr.state.lower() == "closed" and last_pr.merged:
+        last_opened_state = update_last_opened_pr_status(repo_config, agent_name, "MERGED")# last opened pr set to merged
+        update_last_closed_pr_for_agent(
+            repo_config, 
+            agent_name, {
+                "pr_number": last_opened_state["number"],
+                "branch": last_opened_state["branch"],
+                "opened_date": last_opened_state["opened_date"],
+                "closed_date": last_pr.closed_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
+        )
+    else:
+        print("Warning - Last Opened PR in Unknown State")
 
 
 def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
     checkout_branch(repo_config["name"], repo_config["branch"], False)
     current_commit = get_commit_hash(repo_config["name"])
 
-    # TODO: implement this
     # Need to do this step regardless of if additional changes have been made
-    verify_and_update_last_opened_pr(repo_config, agent_state)
+    verify_and_update_last_opened_pr(repo_config, agent_name)
 
     # get refreshed state
     agent_state = get_state_for_agent(repo_config, agent_name)
 
     # TODO: commit will change if last pr merged, need to workout this endless loop... 
     # Skip if nothing new
-    last_commit = agent_state.get("last_run") or {}.get("commit")
+    last_commit = (agent_state.get("last_run") or {}).get("commit")
     if last_commit == current_commit:
         print(f"[{agent_name}] No new commits since last run, skipping.")
         update_last_run_for_agent(repo_config, agent_name, current_commit, "SKIPPED_NO_CHANGES")
         return
 
     # Skip if a bot PR is still open — don't pile on
-    if agent_state.get("last_opened_pr") or {}.get("status") == "open":
+    if (agent_state.get("last_opened_pr") or {}).get("status") in ("OPEN", "STALE"):
         print(f"[{agent_name}] PR still open, skipping.")
         update_last_run_for_agent(repo_config, agent_name, current_commit, "SKIPPED_PR_OPEN")
         return
@@ -134,13 +162,21 @@ def dispatch_agent(agent_name, repo_config, agent_config, agent_state):
         return
 
     # if result suceeded and pr was opened
-    if result and result.get("pr_url"):
-        update_last_run_for_agent(repo_config, agent_name, current_commit, "SUCCESS")
-        update_last_opened_pr_for_agent(repo_config, agent_name, result)
+    if result and result.get("pr_url") and result.get("pr_number"):
+        update_last_run_for_agent(repo_config, agent_name, current_commit, "SUCCESS_PR_OPENED")
+        update_last_opened_pr_for_agent(
+            repo_config, 
+            agent_name, 
+            current_commit,
+            result["branch"],
+            result["pr_number"]
+        )
+        print(f"Success | Opened PR - {agent_name} completed successful run against {repo_config['name']}")
         return 
     
     # no new pr 
     update_last_run_for_agent(repo_config, agent_name, current_commit, "NO_FINDINGS")
+    print(f"Success | No Findings - {agent_name} completed successful run against {repo_config['name']}")
 
 
 def main():
