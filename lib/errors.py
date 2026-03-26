@@ -1,3 +1,19 @@
+class GitCloneError(Exception):
+    """Raised when a git clone operation fails"""
+    def __init__(self, repo_name, reason=None):
+        self.repo_name = repo_name
+        message = f"Failed to clone repo '{repo_name}'"
+        if reason:
+            message += f": {reason}"
+        super().__init__(message)
+
+
+class RepoNotFoundError(Exception):
+    """Raised when a local repo directory does not exist"""
+    def __init__(self, repo_name):
+        self.repo_name = repo_name
+        super().__init__(f"No local repo found for '{repo_name}'")
+
 
 class UnknownAgentError(Exception):
     """Raised when an agent cannot be identified in the agent registry"""

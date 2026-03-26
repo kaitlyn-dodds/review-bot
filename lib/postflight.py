@@ -1,4 +1,4 @@
-from lib.git_runner import checkout_to_branch
+from lib.git_runner import get_current_branch, discard_changes, delete_branch, checkout_to_branch
 from lib.state_management import (
     update_last_run_for_agent,
     update_last_opened_pr_for_agent,
@@ -48,11 +48,18 @@ def run(repo_config, agent_name, current_commit, result) -> bool:
 def _recover(repo_config) -> bool:
     """
     Attempts to return the repo to a clean state on the configured base branch.
+    Discards all local changes, switches back to the base branch, and deletes
+    the bot branch locally and remotely.
     Returns True if recovery succeeded, False if it did not.
     """
+    repo_name = repo_config["name"]
     try:
-        checkout_to_branch(repo_config["name"], repo_config["branch"])
+        bot_branch = get_current_branch(repo_name)
+        discard_changes(repo_name)
+        checkout_to_branch(repo_name, repo_config["branch"])
+        if bot_branch != repo_config["branch"]:
+            delete_branch(repo_name, bot_branch)
         return True
     except Exception as e:
-        print(f"Recovery failed for '{repo_config['name']}': {e}")
+        print(f"Recovery failed for '{repo_name}': {e}")
         return False

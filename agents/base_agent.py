@@ -1,4 +1,3 @@
-import glob
 from pathlib import Path
 from lib.claude_client import call_claude
 import fnmatch
@@ -6,6 +5,7 @@ import fnmatch
 MAX_SOURCE_FILE_SIZE_KB = 100
 MAX_TOTAL_TOKENS = 80000
 CHARS_PER_TOKEN = 4
+MAX_UNICODE_ERRORS = 3
 
 class BaseAgent:
 
@@ -20,29 +20,37 @@ class BaseAgent:
         ignore_patterns = self.agent_config.get("ignore_paths", [])
         files = {}
         total_chars = 0
-        skipped = []
+        unicode_errors = 0
 
         for path in sorted(self.repo_path.glob(pattern)):
-            # Check against ignore patterns
-            relative = path.relative_to(self.repo_path)
-            if any(fnmatch.fnmatch(str(relative), ignore) for ignore in ignore_patterns):
+            relative = str(path.relative_to(self.repo_path))
+
+            if any(fnmatch.fnmatch(relative, ignore) for ignore in ignore_patterns):
                 continue
 
             size_kb = path.stat().st_size / 1024
             if size_kb > MAX_SOURCE_FILE_SIZE_KB:
-                skipped.append((str(relative), "too large"))
+                print(f"Skipping '{relative}': file too large ({size_kb:.1f} KB, limit {MAX_SOURCE_FILE_SIZE_KB} KB)")
                 continue
 
-            content = path.read_text(encoding="utf-8")
+            try:
+                content = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                unicode_errors += 1
+                print(f"Skipping '{relative}': could not decode as UTF-8 ({unicode_errors}/{MAX_UNICODE_ERRORS} unicode errors)")
+                if unicode_errors >= MAX_UNICODE_ERRORS:
+                    raise RuntimeError(
+                        f"Aborting: {unicode_errors} files could not be decoded as UTF-8. "
+                        f"Check that '{pattern}' is not matching binary files."
+                    )
+                continue
+
             if (total_chars + len(content)) / CHARS_PER_TOKEN > MAX_TOTAL_TOKENS:
-                skipped.append((str(relative), "total limit reached"))
+                print(f"Skipping '{relative}': token budget exhausted (limit {MAX_TOTAL_TOKENS} tokens)")
                 continue
 
-            files[str(relative)] = content
+            files[relative] = content
             total_chars += len(content)
-
-        if skipped:
-            print(f"Skipped {len(skipped)} files: {skipped}")
 
         return files
     
