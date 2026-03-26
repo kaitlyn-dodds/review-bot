@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Optional
 import anthropic
@@ -8,6 +9,7 @@ from lib.errors import UnknownAgentError, GitCommitError, GithubRepoError, GitCh
 import lib.preflight as preflight
 import lib.postflight as postflight
 
+logger = logging.getLogger(__name__)
 
 AGENT_REGISTRY = {
     "issue_scanner": IssueScannerAgent,
@@ -28,7 +30,7 @@ def dispatch(agent_name, repo_config, agent_config, agent_state) -> bool:
 
     should_run, reason = preflight.run(repo_config, agent_name, current_commit)
     if not should_run:
-        print(f"[{agent_name}] Skipping: {reason}")
+        logger.info(f"[{agent_name}] Skipping: {reason}")
         return True
 
     result = _run_agent(agent_name, repo_config, agent_config, agent_state)

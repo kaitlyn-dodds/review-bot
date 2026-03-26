@@ -1,11 +1,14 @@
 import argparse
+import logging
 import sys
 
 from lib.config_management import find_config_path, load_config, resolve_agents_on_config
+from lib.logging_setup import setup_logging
 from lib.state_management import get_state_with_create
 from lib.repo_management import repo_exists, clone_repo
 from lib.agent_lifecycle import dispatch
 
+logger = logging.getLogger(__name__)
 
 CONFIG_DIR = "configs"
 
@@ -28,22 +31,24 @@ def main():
         sys.exit(f"Error: no config file found for repo '{args.repo}' in '{CONFIG_DIR}/'.")
 
     config = load_config(config_path)
+    setup_logging(config["name"])
+
     agents = resolve_agents_on_config(config, args.agents)
 
     try:
         repo_state = get_state_with_create(config)
     except Exception as e:
-        print(f"Unable to get or create state file for repo {config['name']}: {str(e)}")
-        sys.exit(f"Unable to get or create state file for repo {config['name']}: {str(e)}")
+        logger.error(f"Unable to get or create state file for repo {config['name']}: {e}")
+        sys.exit(1)
 
     if not repo_exists(config["name"]):
-        print(f"No local repo for {config['name']}, cloning...")
+        logger.info(f"No local repo for {config['name']}, cloning...")
         clone_repo(config)
 
     for agent_name, agent_config in agents:
         should_continue = dispatch(agent_name, config, agent_config, repo_state["agents"][agent_name])
         if not should_continue:
-            print(f"Halting remaining agents for '{config['name']}' due to unrecoverable failure.")
+            logger.error(f"Halting remaining agents for '{config['name']}' due to unrecoverable failure.")
             break
 
 

@@ -1,7 +1,9 @@
+import logging
 import os
 import yaml
 from datetime import datetime, timezone
 
+logger = logging.getLogger(__name__)
 
 STATE_DIR = "/app/state"
 
@@ -66,7 +68,7 @@ def get_state_with_create(config):
     """
 
     if not state_exists(config["name"]):
-        print(f"No state file exists for repo {config['name']}, creating...")
+        logger.info(f"No state file exists for repo {config['name']}, creating...")
         return create_state(config)
     
 

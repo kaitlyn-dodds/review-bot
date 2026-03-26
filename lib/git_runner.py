@@ -1,7 +1,10 @@
+import logging
 import os
 import subprocess
 
 from lib.errors import GitCommitError, GitCheckoutBranchError, GitCloneError
+
+logger = logging.getLogger(__name__)
 
 REPO_DIR = os.environ.get("REPO_DIR", "/app/repos")
 
@@ -86,7 +89,7 @@ def delete_branch(repo_name, branch):
     try:
         subprocess.run(["git", "-C", repo_dir, "push", "origin", "--delete", branch], check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
-        print(f"Warning: could not delete remote branch '{branch}': {e.stderr.strip()}")
+        logger.warning(f"Could not delete remote branch '{branch}': {e.stderr.strip()}")
 
 
 def get_commit_hash(repo_name):

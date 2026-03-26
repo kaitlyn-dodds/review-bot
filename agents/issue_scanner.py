@@ -1,6 +1,9 @@
+import logging
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
+
+logger = logging.getLogger(__name__)
 from lib.git_runner import create_branch, commit_file, get_commit_hash
 from lib.github_client import open_pr
 
@@ -57,7 +60,7 @@ class IssueScannerAgent(BaseAgent):
         # # 5. Extract findings
         findings = response.get("findings", [])
         if not findings:
-            print("No new findings.")
+            logger.info("No new findings.")
             return None
         
         # # 6. Create branch, commit, open PR

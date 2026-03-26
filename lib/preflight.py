@@ -1,4 +1,7 @@
+import logging
+
 from lib.repo_management import checkout_branch
+
 from lib.github_client import get_pull_request
 from lib.state_management import (
     get_state_for_agent,
@@ -7,6 +10,8 @@ from lib.state_management import (
     update_last_opened_pr_status,
     update_last_closed_pr_for_agent,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def run(repo_config, agent_name, current_commit) -> tuple[bool, str]:
@@ -66,4 +71,4 @@ def _verify_and_update_last_opened_pr(repo_config, agent_name):
         )
 
     else:
-        print(f"Warning: last opened PR #{last_opened_state['number']} is in an unknown state")
+        logger.warning(f"Last opened PR #{last_opened_state['number']} is in an unknown state")

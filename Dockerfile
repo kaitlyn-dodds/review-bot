@@ -21,7 +21,8 @@ ENV GIT_AUTHOR_EMAIL="review-bot@noreply"
 ENV GIT_COMMITTER_NAME="Review Bot"                                                                                                                             
 ENV GIT_COMMITTER_EMAIL="review-bot@noreply"
 ENV REPO_DIR="/app/repos"
+ENV LOG_DIR="/app/logs"
 
-RUN mkdir -p /app/state /app/repos
+RUN mkdir -p /app/state /app/repos /app/logs
 
 ENTRYPOINT ["python", "runner.py"]

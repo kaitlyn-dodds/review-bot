@@ -1,4 +1,9 @@
+import logging
+
 from lib.git_runner import get_current_branch, discard_changes, delete_branch, checkout_to_branch
+
+logger = logging.getLogger(__name__)
+
 from lib.state_management import (
     update_last_run_for_agent,
     update_last_opened_pr_for_agent,
@@ -19,12 +24,12 @@ def run(repo_config, agent_name, current_commit, result) -> bool:
             result.branch,
             result.pr_number,
         )
-        print(f"[{agent_name}] Success — PR opened.")
+        logger.info(f"[{agent_name}] Success — PR opened.")
         return True
 
     if result.status == "NO_FINDINGS":
         update_last_run_for_agent(repo_config, agent_name, current_commit, "NO_FINDINGS")
-        print(f"[{agent_name}] Success — no findings.")
+        logger.info(f"[{agent_name}] Success — no findings.")
         return True
 
     # All failure cases — record state first, then attempt git recovery
@@ -35,11 +40,11 @@ def run(repo_config, agent_name, current_commit, result) -> bool:
         result.status,
         result.error,
     )
-    print(f"[{agent_name}] Failed with status '{result.status}': {result.error}")
+    logger.error(f"[{agent_name}] Failed with status '{result.status}': {result.error}")
 
     recovered = _recover(repo_config)
     if not recovered:
-        print(f"[{agent_name}] Git recovery failed — halting further agents for '{repo_config['name']}'.")
+        logger.error(f"[{agent_name}] Git recovery failed — halting further agents for '{repo_config['name']}'.")
         return False
 
     return True
@@ -61,5 +66,5 @@ def _recover(repo_config) -> bool:
             delete_branch(repo_name, bot_branch)
         return True
     except Exception as e:
-        print(f"Recovery failed for '{repo_name}': {e}")
+        logger.error(f"Recovery failed for '{repo_name}': {e}")
         return False

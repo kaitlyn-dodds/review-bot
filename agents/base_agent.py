@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 from lib.claude_client import call_claude
 from lib.git_runner import REPO_DIR
 import fnmatch
+
+logger = logging.getLogger(__name__)
 
 MAX_SOURCE_FILE_SIZE_KB = 100
 MAX_TOTAL_TOKENS = 80000
@@ -31,14 +34,14 @@ class BaseAgent:
 
             size_kb = path.stat().st_size / 1024
             if size_kb > MAX_SOURCE_FILE_SIZE_KB:
-                print(f"Skipping '{relative}': file too large ({size_kb:.1f} KB, limit {MAX_SOURCE_FILE_SIZE_KB} KB)")
+                logger.warning(f"Skipping '{relative}': file too large ({size_kb:.1f} KB, limit {MAX_SOURCE_FILE_SIZE_KB} KB)")
                 continue
 
             try:
                 content = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 unicode_errors += 1
-                print(f"Skipping '{relative}': could not decode as UTF-8 ({unicode_errors}/{MAX_UNICODE_ERRORS} unicode errors)")
+                logger.warning(f"Skipping '{relative}': could not decode as UTF-8 ({unicode_errors}/{MAX_UNICODE_ERRORS} unicode errors)")
                 if unicode_errors >= MAX_UNICODE_ERRORS:
                     raise RuntimeError(
                         f"Aborting: {unicode_errors} files could not be decoded as UTF-8. "
@@ -47,7 +50,7 @@ class BaseAgent:
                 continue
 
             if (total_chars + len(content)) / CHARS_PER_TOKEN > MAX_TOTAL_TOKENS:
-                print(f"Skipping '{relative}': token budget exhausted (limit {MAX_TOTAL_TOKENS} tokens)")
+                logger.warning(f"Skipping '{relative}': token budget exhausted (limit {MAX_TOTAL_TOKENS} tokens)")
                 continue
 
             files[relative] = content

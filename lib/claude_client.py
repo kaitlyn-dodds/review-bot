@@ -1,6 +1,9 @@
+import logging
 import os
 import anthropic
 from lib.errors import ClaudeMaxTokensError
+
+logger = logging.getLogger(__name__)
 
 _client = None
 
@@ -31,13 +34,13 @@ def call_claude(system_prompt, user_message, model="claude-opus-4-6", max_tokens
     try:
         message = client.messages.create(**kwargs)
     except anthropic.APIStatusError as e:
-        print(f"API error {e.status_code}: {e.message}")
+        logger.error(f"API error {e.status_code}: {e.message}")
         raise
 
     if message.stop_reason == "max_tokens":
         raise ClaudeMaxTokensError(model, max_tokens)
 
-    print(f"Usage — input tokens: {message.usage.input_tokens}, output tokens: {message.usage.output_tokens}")
+    logger.info(f"Usage — input tokens: {message.usage.input_tokens}, output tokens: {message.usage.output_tokens}")
 
     tool_use_block = next((b for b in message.content if b.type == "tool_use"), None)
     if tool_use_block:
