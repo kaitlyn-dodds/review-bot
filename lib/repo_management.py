@@ -1,9 +1,7 @@
 import os
 
-from lib.git_runner import clone, checkout_to_branch
+from lib.git_runner import clone, checkout_to_branch, REPO_DIR
 from lib.errors import RepoNotFoundError
-
-REPO_DIR = "/app/repos"
 
 
 def repo_exists(repo_name):

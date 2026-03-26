@@ -1,5 +1,6 @@
 from pathlib import Path
 from lib.claude_client import call_claude
+from lib.git_runner import REPO_DIR
 import fnmatch
 
 MAX_SOURCE_FILE_SIZE_KB = 100
@@ -13,7 +14,7 @@ class BaseAgent:
         self.repo_config = repo_config
         self.agent_config = agent_config
         self.agent_state = agent_state
-        self.repo_path = Path(repo_config["repo_path"])
+        self.repo_path = Path(REPO_DIR) / repo_config["name"]
 
     def load_source_files(self):
         pattern = self.agent_config["file_pattern"]

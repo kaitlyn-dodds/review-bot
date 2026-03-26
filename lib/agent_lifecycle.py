@@ -4,7 +4,7 @@ import anthropic
 
 from agents.issue_scanner import IssueScannerAgent
 from lib.git_runner import get_commit_hash
-from lib.errors import UnknownAgentError, GitCommitError, GithubRepoError, GitCheckoutBranchError
+from lib.errors import UnknownAgentError, GitCommitError, GithubRepoError, GitCheckoutBranchError, ClaudeMaxTokensError
 import lib.preflight as preflight
 import lib.postflight as postflight
 
@@ -49,6 +49,8 @@ def _run_agent(agent_name, repo_config, agent_config, agent_state) -> AgentRunRe
         raw_result = agent.run()
     except GitCommitError as e:
         return AgentRunResult(status="FAILED_WITH_GIT_COMMIT_ERROR", error=str(e))
+    except ClaudeMaxTokensError as e:
+        return AgentRunResult(status="FAILED_MAX_TOKENS", error=str(e))
     except anthropic.BadRequestError as e:
         return AgentRunResult(status="FAILED_WITH_REQUEST_ERROR", error=str(e))
     except GithubRepoError as e:

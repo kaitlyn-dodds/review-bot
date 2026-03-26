@@ -59,17 +59,18 @@ class IssueScannerAgent(BaseAgent):
         if not findings:
             print("No new findings.")
             return None
+        
+        # # 6. Create branch, commit, open PR
+        commit_hash = get_commit_hash(self.repo_config["name"])
+        branch_name = f"bot/issue-scan-{commit_hash[:7]}"
+        create_branch(self.repo_config["name"], branch_name)
 
-        # # 6. Write updated KNOWN_ISSUES.md
+        # # 7. Write updated KNOWN_ISSUES.md
         updated_content = self._build_known_issues(findings, context)
         issues_path = self.repo_path / self.agent_config["issues_file_path"]
         issues_path.write_text(updated_content, encoding="utf-8")
 
-        # # 7. Create branch, commit, open PR
-        commit_hash = get_commit_hash(self.repo_config["name"])
-        branch_name = f"bot/issue-scan-{commit_hash[:7]}"
-
-        create_branch(self.repo_config["name"], branch_name)
+        # # 7. Commit changes, open PR
         commit_file(self.repo_config["name"], str(issues_path), "bot: update KNOWN_ISSUES.md")
         pr_url, pr_number = open_pr(
             self.repo_config,

@@ -1,5 +1,6 @@
 import os
 import anthropic
+from lib.errors import ClaudeMaxTokensError
 
 _client = None
 
@@ -34,8 +35,7 @@ def call_claude(system_prompt, user_message, model="claude-opus-4-6", max_tokens
         raise
 
     if message.stop_reason == "max_tokens":
-        print("Warning: response was truncated, consider increasing max_tokens")
-        # TODO: throw error, agent needs to bubble error up to runner who should mark the run as FAILED_MAX_TOKENS
+        raise ClaudeMaxTokensError(model, max_tokens)
 
     print(f"Usage — input tokens: {message.usage.input_tokens}, output tokens: {message.usage.output_tokens}")
 

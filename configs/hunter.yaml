@@ -3,7 +3,6 @@ name: Hunter
 description: >
   Hunter is a 2D simulation and survival game built in Godot Engine 4.6. The Player manages a cat colony, balancing growth, survival, relationships, and territory against a living world that pushes back.
 github_repo: kaitlyn-dodds/Hunter
-repo_path: /app/repos/Hunter
 branch: main
 agents:
   issue_scanner:

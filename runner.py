@@ -32,9 +32,9 @@ def main():
 
     try:
         repo_state = get_state_with_create(config)
-    except:
-        print(f"Unable to get or create state file for repo {config['name']}")
-        sys.exit(f"Unable to get or create state file for repo {config['name']}")
+    except Exception as e:
+        print(f"Unable to get or create state file for repo {config['name']}: {str(e)}")
+        sys.exit(f"Unable to get or create state file for repo {config['name']}: {str(e)}")
 
     if not repo_exists(config["name"]):
         print(f"No local repo for {config['name']}, cloning...")

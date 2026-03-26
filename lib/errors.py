@@ -1,3 +1,9 @@
+class ClaudeMaxTokensError(Exception):
+    """Raised when Claude's response is truncated due to hitting the max_tokens limit"""
+    def __init__(self, model, max_tokens):
+        super().__init__(f"Response truncated by '{model}' — max_tokens limit of {max_tokens} reached")
+
+
 class GitCloneError(Exception):
     """Raised when a git clone operation fails"""
     def __init__(self, repo_name, reason=None):

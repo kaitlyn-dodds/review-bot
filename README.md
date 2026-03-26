@@ -20,7 +20,7 @@ A cron job on the host triggers the review process on a configurable schedule. T
 
 **Bot framework**
 - `runner.py` acts as the entry point — loads config, checks state, dispatches agents
-- Per-repo config files in `configs/` define repo path, GitHub details, and which agents are enabled
+- Per-repo config files in `configs/` define GitHub details and which agents are enabled
 - Per-repo state files in `state/` track last evaluated commit hash and open PR status
 - At the start of each run the runner checks the status of any open PRs before deciding whether to scan
 - If the current HEAD matches the last evaluated commit and no PRs need attention, skip the run
@@ -56,7 +56,6 @@ name: RepoName
 description: >
   Short description of the project being analyzed.
 github_repo: owner/repo-name
-repo_path: /app/repos/RepoName
 branch: main
 agents:
   bug_scanner:

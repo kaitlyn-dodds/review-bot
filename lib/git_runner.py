@@ -3,7 +3,7 @@ import subprocess
 
 from lib.errors import GitCommitError, GitCheckoutBranchError, GitCloneError
 
-REPO_DIR = "/app/repos"
+REPO_DIR = os.environ.get("REPO_DIR", "/app/repos")
 
 
 def _repo_dir(repo_name):
