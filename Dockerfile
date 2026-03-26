@@ -20,6 +20,7 @@ ENV GIT_AUTHOR_NAME="Review Bot"
 ENV GIT_AUTHOR_EMAIL="review-bot@noreply"
 ENV GIT_COMMITTER_NAME="Review Bot"                                                                                                                             
 ENV GIT_COMMITTER_EMAIL="review-bot@noreply"
+ENV REPO_DIR="/app/repos"
 
 RUN mkdir -p /app/state /app/repos
 
