@@ -14,6 +14,6 @@ docker run --rm \
   -v ./temp/state:/app/state \
   -v ./temp/repos:/app/repos \
   -v ./temp/logs:/app/logs \
-  -v ~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro \
-  -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
+  -v ~/.ssh/id_ed25519:/home/botuser/.ssh/id_ed25519:ro \
+  -v ~/.ssh/known_hosts:/home/botuser/.ssh/known_hosts:ro \
   review-bot --repo "$1" "${@:2}"
