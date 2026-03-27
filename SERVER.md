@@ -63,8 +63,8 @@ docker run --rm \
   -v /opt/review-bot/state:/app/state \
   -v /opt/review-bot/repos:/app/repos \
   -v /opt/review-bot/logs:/app/logs \
-  -v /home/kaitlyn/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro \
-  -v /home/kaitlyn/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
+  -v /home/kaitlyn/.ssh/id_ed25519:/home/botuser/.ssh/id_ed25519:ro \
+  -v /home/kaitlyn/.ssh/known_hosts:/home/botuser/.ssh/known_hosts:ro \
   ghcr.io/kaitlyn-dodds/review-bot:latest
 ```
 
