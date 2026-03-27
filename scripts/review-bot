@@ -1,0 +1,3 @@
+
+# Run review-bot issue scanner every Tuesday and Friday at 2am on the Hunter project
+0 8 * * 2,5 kaitlyn /opt/review-bot/run hunter issue_scanner >> /opt/review-bot/logs/cron.log 2>&1
