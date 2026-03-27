@@ -5,6 +5,10 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} botuser && useradd -m -u ${UID} -g ${GID} botuser
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -23,6 +27,8 @@ ENV GIT_COMMITTER_EMAIL="review-bot@noreply"
 ENV REPO_DIR="/app/repos"
 ENV LOG_DIR="/app/logs"
 
-RUN mkdir -p /app/state /app/repos /app/logs
+RUN mkdir -p /app/state /app/repos /app/logs && chown -R botuser:botuser /app
+
+USER botuser
 
 ENTRYPOINT ["python", "runner.py"]
